@@ -1,0 +1,12 @@
+{
+  "stryker-config": {
+    "solution": "../VehicleManagement.slnx",
+    "project": "VehicleManagement.Api.csproj",
+    "reporters": [
+      "html",
+      "cleartext",
+      "progress"
+    ],
+    "mutation-level": "Standard"
+  }
+}
