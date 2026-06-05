@@ -9,7 +9,7 @@ on:
 jobs:
   build-and-unit-tests:
     name: Build & Unit Tests
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -30,7 +30,7 @@ jobs:
 
   mutation-tests:
     name: Mutation Testing (Stryker)
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: build-and-unit-tests
     steps:
       - name: Checkout code
@@ -50,7 +50,7 @@ jobs:
 
   sonarqube:
     name: SonarQube Analysis
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: build-and-unit-tests
     steps:
       - name: Checkout code
@@ -83,7 +83,7 @@ jobs:
 
   security-owasp:
     name: OWASP Dependency Check
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: build-and-unit-tests
     steps:
       - name: Checkout code
