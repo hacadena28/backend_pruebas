@@ -77,9 +77,9 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: "http://localhost:9000"
         run: |
-          dotnet sonarscanner begin /k:"VehicleManagement.Backend" /d:sonar.host.url="${{ env.SONAR_HOST_URL }}" /d:sonar.token="${{ env.SONAR_TOKEN }}" /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
+          dotnet sonarscanner begin /k:"VehicleManagement.Backend" /d:sonar.host.url="${{ env.SONAR_HOST_URL }}" /d:sonar.token="${{ env.SONAR_TOKEN }}" /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml" /d:sonar.cs.vstest.reportsPaths="**/*.trx"
           dotnet build VehicleManagement.slnx
-          dotnet test VehicleManagement.slnx --no-build --configuration Release --verbosity normal --collect:"XPlat Code Coverage" --settings VehicleManagement.Test/coverlet.runsettings
+          dotnet test VehicleManagement.slnx --no-build --configuration Release --verbosity normal --collect:"XPlat Code Coverage" --settings VehicleManagement.Test/coverlet.runsettings --logger trx
           dotnet sonarscanner end /d:sonar.token="${{ env.SONAR_TOKEN }}"
 
   security-owasp:
