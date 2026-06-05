@@ -79,6 +79,7 @@ jobs:
         run: |
           dotnet sonarscanner begin /k:"VehicleManagement.Backend" /d:sonar.host.url="${{ env.SONAR_HOST_URL }}" /d:sonar.token="${{ env.SONAR_TOKEN }}" /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
           dotnet build VehicleManagement.slnx
+          dotnet test VehicleManagement.slnx --no-build --configuration Release --verbosity normal /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
           dotnet sonarscanner end /d:sonar.token="${{ env.SONAR_TOKEN }}"
 
   security-owasp:
