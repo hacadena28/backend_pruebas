@@ -72,13 +72,16 @@ jobs:
       - name: Install SonarScanner
         run: dotnet tool install --global dotnet-sonarscanner
 
+      - name: Install dotnet-coverage
+        run: dotnet tool install --global dotnet-coverage
+
       - name: Analyze with SonarQube
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: "http://localhost:9000"
         run: |
-          dotnet sonarscanner begin /k:"VehicleManagement.Backend" /d:sonar.host.url="${{ env.SONAR_HOST_URL }}" /d:sonar.token="${{ env.SONAR_TOKEN }}" /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml" /d:sonar.cs.vstest.reportsPaths="**/*.trx"
-          dotnet build VehicleManagement.slnx
-          dotnet test VehicleManagement.slnx --no-build --configuration Release --verbosity normal --collect:"XPlat Code Coverage" --settings VehicleManagement.Test/coverlet.runsettings --logger trx
+          dotnet sonarscanner begin /k:"VehicleManagement.Backend" /d:sonar.host.url="${{ env.SONAR_HOST_URL }}" /d:sonar.token="${{ env.SONAR_TOKEN }}" /d:sonar.cs.vscoveragexml.reportsPaths=coverage.xml /d:sonar.cs.vstest.reportsPaths="**/*.trx"
+          dotnet build VehicleManagement.slnx --no-incremental
+          dotnet-coverage collect "dotnet test VehicleManagement.slnx --no-build --configuration Release --verbosity normal --logger trx" -f xml -o "coverage.xml"
           dotnet sonarscanner end /d:sonar.token="${{ env.SONAR_TOKEN }}"
 
