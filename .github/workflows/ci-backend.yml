@@ -126,6 +126,9 @@ jobs:
         env:
           MONGODB_CONNECTION_STRING: mongodb://localhost:27018
           MONGODB_DATABASE_NAME: VehicleDb
+          JWT_ISSUER: "VehicleManagement"
+          JWT_AUDIENCE: "VehicleManagementUsers"
+          JWT_SIGNING_KEY: "SuperSecretKeyForVehicleManagementAPI!"
         run: |
           Start-Process -NoNewWindow dotnet -ArgumentList "run", "--project", "VehicleManagement.Api/VehicleManagement.Api.csproj", "--urls", "http://0.0.0.0:5014" -RedirectStandardOutput api_stdout.log -RedirectStandardError api_stderr.log
           
