@@ -122,6 +122,9 @@ jobs:
           Start-Sleep -Seconds 5
           docker exec mongodb-test mongosh VehicleDb --eval "db.User.insertOne({ _id: '1', Email: 'admin@example.com', PasswordHash: 'Admin123!', FullName: 'Admin', IsDeleted: false })"
 
+      - name: Build API
+        run: dotnet build VehicleManagement.Api/VehicleManagement.Api.csproj
+
       - name: Start API
         env:
           MONGODB_CONNECTION_STRING: mongodb://localhost:27018
@@ -130,7 +133,16 @@ jobs:
           JWT_AUDIENCE: "VehicleManagementUsers"
           JWT_SIGNING_KEY: "SuperSecretKeyForVehicleManagementAPI!"
         run: |
-          Start-Process -NoNewWindow dotnet -ArgumentList "run", "--project", "VehicleManagement.Api/VehicleManagement.Api.csproj", "--urls", "http://0.0.0.0:5014" -RedirectStandardOutput api_stdout.log -RedirectStandardError api_stderr.log
+          $dotnetPath = (Get-Command dotnet).Source
+          Write-Host "Using dotnet at: $dotnetPath"
+          $apiProcess = Start-Process -NoNewWindow -PassThru -FilePath $dotnetPath -ArgumentList "run", "--project", "VehicleManagement.Api/VehicleManagement.Api.csproj", "--no-build", "--urls", "http://0.0.0.0:5014" -RedirectStandardOutput api_stdout.log -RedirectStandardError api_stderr.log
+          Start-Sleep -Seconds 5
+          if ($apiProcess.HasExited) {
+              Write-Error "API process exited immediately!"
+              if (Test-Path api_stdout.log) { Get-Content api_stdout.log }
+              if (Test-Path api_stderr.log) { Get-Content api_stderr.log }
+              exit 1
+          }
           
       - name: Wait for API
         run: |
