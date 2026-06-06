@@ -134,21 +134,17 @@ jobs:
           
       - name: Wait for API
         run: |
-          $maxRetries = 120
+          $maxRetries = 60
           $retryCount = 0
           while ($retryCount -lt $maxRetries) {
-              try {
-                  $response = Invoke-WebRequest -Uri "http://localhost:5014/api/Auth/login" -Method POST -Body "{}" -ContentType "application/json" -UseBasicParsing
+              $connection = Test-NetConnection -ComputerName localhost -Port 5014 -InformationLevel Quiet
+              if ($connection -eq $true) {
+                  Write-Host "API is up and listening on port 5014!"
                   break
-              } catch {
-                  if ($null -ne $_.Exception.Response -and ($_.Exception.Response.StatusCode -eq 400 -or $_.Exception.Response.StatusCode -eq 401 -or $_.Exception.Response.StatusCode -eq 500)) {
-                      Write-Host "API is up!"
-                      break
-                  }
-                  Write-Host "Waiting for API..."
-                  Start-Sleep -Seconds 2
-                  $retryCount++
               }
+              Write-Host "Waiting for API to bind to port 5014..."
+              Start-Sleep -Seconds 2
+              $retryCount++
           }
           if ($retryCount -eq $maxRetries) { 
               Write-Error "Timeout waiting for API"
