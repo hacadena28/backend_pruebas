@@ -139,6 +139,11 @@ jobs:
       - name: Start MongoDB
         run: docker run -d -p 27017:27017 --name mongodb mongo:latest
 
+      - name: Seed Database
+        run: |
+          Start-Sleep -Seconds 5
+          docker exec mongodb mongosh VehicleDb --eval "db.User.insertOne({ _id: '1', Email: 'admin@example.com', PasswordHash: 'Admin123!', FullName: 'Admin', IsDeleted: false })"
+
       - name: Start API
         env:
           MONGODB_CONNECTION_STRING: mongodb://localhost:27017
