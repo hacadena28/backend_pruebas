@@ -188,3 +188,34 @@ jobs:
           path: jmeter/report/
           retention-days: 10
 
+  deploy-pages:
+    name: Deploy Reports to GitHub Pages
+    runs-on: self-hosted
+    needs: [build-and-unit-tests, performance-tests]
+    if: always()
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download Unit Test Coverage
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: backend-coverage-html
+          path: public/coverage
+          
+      - name: Download JMeter Report
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: backend-jmeter-report
+          path: public/jmeter
+          
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
+          destination_dir: backend
+          keep_history: true
+
