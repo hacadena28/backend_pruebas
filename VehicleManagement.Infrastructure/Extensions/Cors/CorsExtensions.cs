@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -12,14 +12,21 @@ public static class CorsExtensions
     {
         var corsSettings = config.GetSection(nameof(CorsSettings)).Get<CorsSettings>();
         var origins = new List<string>();
-        if (corsSettings!.React is not null)
+        
+        if (corsSettings?.React is not null)
+        {
             origins.AddRange(corsSettings.React.Split(';', StringSplitOptions.RemoveEmptyEntries));
+        }
 
         return services.AddCors(opt =>
             opt.AddPolicy(CorsPolicy, policy =>
-                policy.AllowAnyHeader()
-                    .AllowAnyMethod()
-                    .WithOrigins(origins.ToArray())));
+            {
+                policy.AllowAnyHeader().AllowAnyMethod();
+                if (origins.Count > 0)
+                {
+                    policy.WithOrigins(origins.ToArray());
+                }
+            }));
     }
 
     public static IApplicationBuilder UseCorsPolicy(this IApplicationBuilder app) =>
