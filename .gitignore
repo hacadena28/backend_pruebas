@@ -417,3 +417,8 @@ dotCover.Output.html
 
 /VehicleManagement.Infrastructure.Test/bin
 /VehicleManagement.Infrastructure.Test/obj
+
+
+# JMeter resultados y reportes
+jmeter/*.jtl
+jmeter/report/
