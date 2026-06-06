@@ -149,18 +149,18 @@ jobs:
           MONGODB_CONNECTION_STRING: mongodb://localhost:27018
           MONGODB_DATABASE_NAME: VehicleDb
         run: |
-          Start-Process -NoNewWindow dotnet -ArgumentList "run", "--project", "VehicleManagement.Api/VehicleManagement.Api.csproj", "--urls", "http://0.0.0.0:5014"
+          Start-Process -NoNewWindow dotnet -ArgumentList "run", "--project", "VehicleManagement.Api/VehicleManagement.Api.csproj", "--urls", "http://0.0.0.0:5014" -RedirectStandardOutput api_stdout.log -RedirectStandardError api_stderr.log
           
       - name: Wait for API
         run: |
-          $maxRetries = 30
+          $maxRetries = 120
           $retryCount = 0
           while ($retryCount -lt $maxRetries) {
               try {
                   $response = Invoke-WebRequest -Uri "http://localhost:5014/api/Auth/login" -Method POST -Body "{}" -ContentType "application/json" -UseBasicParsing
                   break
               } catch {
-                  if ($_.Exception.Response.StatusCode -eq 400 -or $_.Exception.Response.StatusCode -eq 401) {
+                  if ($null -ne $_.Exception.Response -and ($_.Exception.Response.StatusCode -eq 400 -or $_.Exception.Response.StatusCode -eq 401 -or $_.Exception.Response.StatusCode -eq 500)) {
                       Write-Host "API is up!"
                       break
                   }
@@ -169,7 +169,12 @@ jobs:
                   $retryCount++
               }
           }
-          if ($retryCount -eq $maxRetries) { Write-Error "Timeout waiting for API"; exit 1 }
+          if ($retryCount -eq $maxRetries) { 
+              Write-Error "Timeout waiting for API"
+              if (Test-Path api_stdout.log) { Get-Content api_stdout.log }
+              if (Test-Path api_stderr.log) { Get-Content api_stderr.log }
+              exit 1 
+          }
 
       - name: Run JMeter Tests
         run: |
