@@ -26,7 +26,7 @@ jobs:
         run: dotnet build VehicleManagement.slnx --no-restore --configuration Release
 
       - name: Test
-        run: dotnet test VehicleManagement.slnx --no-build --configuration Release --verbosity normal /p:CollectCoverage=true /p:CoverletOutputFormat=opencover --logger trx --results-directory "TestResults"
+        run: dotnet test VehicleManagement.slnx --no-build --configuration Release --verbosity normal /p:CollectCoverage=true /p:CoverletOutputFormat=opencover --logger trx --logger html --results-directory "TestResults"
 
       - name: Upload Unit Test Results
         uses: actions/upload-artifact@v4
@@ -34,6 +34,20 @@ jobs:
         with:
           name: backend-unit-test-results
           path: TestResults/
+          retention-days: 10
+
+      - name: Install ReportGenerator
+        run: dotnet tool install -g dotnet-reportgenerator-globaltool
+
+      - name: Generate Coverage Report
+        run: reportgenerator -reports:**/coverage.opencover.xml -targetdir:CoverageReport -reporttypes:Html
+
+      - name: Upload Backend Coverage Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-coverage-html
+          path: CoverageReport/
           retention-days: 10
 
   mutation-tests:
