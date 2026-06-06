@@ -137,16 +137,16 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Start MongoDB
-        run: docker run -d -p 27017:27017 --name mongodb mongo:latest
+        run: docker run -d -p 27018:27017 --name mongodb-test mongo:latest
 
       - name: Seed Database
         run: |
           Start-Sleep -Seconds 5
-          docker exec mongodb mongosh VehicleDb --eval "db.User.insertOne({ _id: '1', Email: 'admin@example.com', PasswordHash: 'Admin123!', FullName: 'Admin', IsDeleted: false })"
+          docker exec mongodb-test mongosh VehicleDb --eval "db.User.insertOne({ _id: '1', Email: 'admin@example.com', PasswordHash: 'Admin123!', FullName: 'Admin', IsDeleted: false })"
 
       - name: Start API
         env:
-          MONGODB_CONNECTION_STRING: mongodb://localhost:27017
+          MONGODB_CONNECTION_STRING: mongodb://localhost:27018
           MONGODB_DATABASE_NAME: VehicleDb
         run: |
           Start-Process -NoNewWindow dotnet -ArgumentList "run", "--project", "VehicleManagement.Api/VehicleManagement.Api.csproj", "--urls", "http://0.0.0.0:5014"
@@ -178,7 +178,7 @@ jobs:
 
       - name: Clean up MongoDB
         if: always()
-        run: docker rm -f mongodb
+        run: docker rm -f mongodb-test
 
       - name: Upload JMeter Report
         uses: actions/upload-artifact@v4
