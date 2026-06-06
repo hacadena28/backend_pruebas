@@ -14,7 +14,7 @@ public class JwtTokenGeneratorTests
     public JwtTokenGeneratorTests()
     {
         _configurationMock = new Mock<IConfiguration>();
-        _generator = new JwtTokenGenerator(_configurationMock.Object);
+        _generator = new JwtTokenGenerator();
         
         // Set environment variables needed for the generator
         Environment.SetEnvironmentVariable("JWT_SIGNING_KEY", "this_is_a_very_long_secret_key_at_least_32_chars");

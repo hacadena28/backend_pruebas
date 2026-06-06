@@ -5,10 +5,17 @@ using VehicleManagement.Application.Auth.Commands;
 
 namespace VehicleManagement.Api.Controllers;
 
-[Route(BaseRoute.BaseRouteUrl)]
-[ApiController]
+/// <summary>
+/// Controlador para la autenticación de usuarios.
+/// </summary>
 public class AuthController : BaseController
 {
+    /// <summary>
+    /// Endpoint para iniciar sesión. Recibe un comando de inicio de sesión con el correo electrónico 
+    /// y la contraseña del usuario, y devuelve un token JWT si las credenciales son válidas.
+    /// </summary>
+    /// <param name="command"></param>
+    /// <returns></returns>
     [AllowAnonymous]
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginCommand command)

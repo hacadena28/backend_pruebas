@@ -11,12 +11,6 @@ namespace VehicleManagement.Infrastructure.Adapters;
 
 public sealed class JwtTokenGenerator : IJwtTokenGenerator
 {
-    private readonly IConfiguration _configuration;
-
-    public JwtTokenGenerator(IConfiguration configuration)
-    {
-        _configuration = configuration;
-    }
 
     public string Generate(User user)
     {

@@ -2,6 +2,7 @@ using Moq;
 using VehicleManagement.Application.Vehiculos.Dtos;
 using VehicleManagement.Application.Vehiculos.Queries;
 using VehicleManagement.Application.Vehiculos.Commands;
+using VehicleManagement.Application.UserCase.BaseCommands.Commands.DaleteBase;
 using VehicleManagement.Domain.Common.Wrappers;
 using VehicleManagement.Domain.Entities;
 using VehicleManagement.Domain.Ports;
@@ -68,5 +69,78 @@ public class VehiculoHandlersTests
         Assert.NotNull(result);
         Assert.True(result.Success);
         Assert.Single(result.Data);
+    }
+
+    [Fact]
+    public async Task UpdateVehiculoHandler_Should_Update_Entity_And_Return_Response()
+    {
+        // Arrange
+        var id = "1";
+        var originalVehiculo = new EVehiculo 
+        { 
+            Id = id, 
+            Placa = "OLD-123", 
+            Marca = "Toyota", 
+            Modelo = "Corolla", 
+            Anio = 2010, 
+            Color = "Blanco", 
+            FechaRegistro = DateTime.UtcNow 
+        };
+        
+        var repoMock = new Mock<IGenericRepository<EVehiculo>>();
+        repoMock.Setup(r => r.GetByIdAsync(id)).ReturnsAsync(originalVehiculo);
+        repoMock.Setup(r => r.UpdateAsync(It.IsAny<EVehiculo>())).Returns(Task.CompletedTask);
+
+        var handler = new UpdateVehiculoHandler(repoMock.Object);
+        var cmd = new UpdateVehiculoCommand 
+        { 
+            Id = id, 
+            Placa = "NEW-789", 
+            Marca = "Honda", 
+            Modelo = "Civic", 
+            Anio = 2022, 
+            Color = "Negro" 
+        };
+
+        // Act
+        var result = await handler.Handle(cmd, CancellationToken.None);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.True(result.Success);
+        Assert.Equal("NEW-789", result.Data!.Placa);
+        Assert.Equal("Honda", result.Data.Marca);
+        Assert.Equal("Civic", result.Data.Modelo);
+        Assert.Equal(2022, result.Data.Anio);
+        Assert.Equal("Negro", result.Data.Color);
+        
+        repoMock.Verify(r => r.UpdateAsync(It.Is<EVehiculo>(v => 
+            v.Placa == "NEW-789" && 
+            v.Marca == "Honda" && 
+            v.Modelo == "Civic" && 
+            v.Anio == 2022 && 
+            v.Color == "Negro")), Times.Once);
+    }
+
+    [Fact]
+    public async Task DeleteVehiculoHandler_Should_Delete_And_Return_Success()
+    {
+        // Arrange
+        var id = "1";
+        var vehiculo = new EVehiculo { Id = id };
+        var repoMock = new Mock<IGenericRepository<EVehiculo>>();
+        repoMock.Setup(r => r.GetByIdAsync(id)).ReturnsAsync(vehiculo);
+        repoMock.Setup(r => r.DeleteAsync(vehiculo)).Returns(Task.CompletedTask);
+
+        var handler = new DeleteHandler<DeleteVehiculoCommand, EVehiculo>(repoMock.Object);
+        var cmd = new DeleteVehiculoCommand(id);
+
+        // Act
+        var result = await handler.Handle(cmd, CancellationToken.None);
+
+        // Assert
+        Assert.True(result.Success);
+        Assert.Equal("Eliminado exitosamente", result.Message);
+        repoMock.Verify(r => r.DeleteAsync(vehiculo), Times.Once);
     }
 }
