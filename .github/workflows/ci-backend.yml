@@ -26,7 +26,15 @@ jobs:
         run: dotnet build VehicleManagement.slnx --no-restore --configuration Release
 
       - name: Test
-        run: dotnet test VehicleManagement.slnx --no-build --configuration Release --verbosity normal /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
+        run: dotnet test VehicleManagement.slnx --no-build --configuration Release --verbosity normal /p:CollectCoverage=true /p:CoverletOutputFormat=opencover --logger trx --results-directory "TestResults"
+
+      - name: Upload Unit Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-unit-test-results
+          path: TestResults/
+          retention-days: 10
 
   mutation-tests:
     name: Mutation Testing (Stryker)
@@ -47,6 +55,14 @@ jobs:
       - name: Run Stryker
         run: dotnet stryker
         working-directory: VehicleManagement.Test # Or the folder containing tests
+
+      - name: Upload Mutation Test Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-mutation-report
+          path: VehicleManagement.Test/StrykerOutput/
+          retention-days: 10
 
   sonarqube:
     name: SonarQube Analysis
@@ -84,4 +100,12 @@ jobs:
           dotnet build VehicleManagement.slnx --no-incremental --configuration Release
           dotnet-coverage collect "dotnet test VehicleManagement.slnx --no-build --configuration Release --verbosity normal --logger trx" -f xml -o "coverage.xml"
           dotnet sonarscanner end /d:sonar.token="${{ env.SONAR_TOKEN }}"
+
+      - name: Upload Sonar Coverage Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-coverage-xml
+          path: coverage.xml
+          retention-days: 10
 
