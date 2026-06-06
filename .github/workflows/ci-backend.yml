@@ -193,6 +193,8 @@ jobs:
     runs-on: self-hosted
     needs: [build-and-unit-tests, performance-tests]
     if: always()
+    permissions:
+      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -217,5 +219,5 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./public
           destination_dir: backend
-          keep_history: true
+          keep_files: true
 
