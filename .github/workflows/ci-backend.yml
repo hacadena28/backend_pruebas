@@ -120,29 +120,25 @@ jobs:
       - name: Seed Database
         run: |
           Start-Sleep -Seconds 5
-          docker exec mongodb-test mongosh VehicleDb --eval "db.User.insertOne({ _id: '1', Email: 'admin@example.com', PasswordHash: 'Admin123!', FullName: 'Admin', IsDeleted: false })"
+          docker exec mongodb-test mongosh VehicleDb --eval "db.User.insertOne({ _id: '1', Email: 'admin@example.com', PasswordHash: 'Admin123!', FullName: 'Admin' })"
 
-      - name: Build API
-        run: dotnet build VehicleManagement.Api/VehicleManagement.Api.csproj
-
-      - name: Start API
-        env:
-          MONGODB_CONNECTION_STRING: mongodb://localhost:27018
-          MONGODB_DATABASE_NAME: VehicleDb
-          JWT_ISSUER: "VehicleManagement"
-          JWT_AUDIENCE: "VehicleManagementUsers"
-          JWT_SIGNING_KEY: "SuperSecretKeyForVehicleManagementAPI!"
+      - name: Start API (Docker)
         run: |
-          $dotnetPath = (Get-Command dotnet).Source
-          Write-Host "Using dotnet at: $dotnetPath"
-          $apiProcess = Start-Process -NoNewWindow -PassThru -FilePath $dotnetPath -ArgumentList "run", "--project", "VehicleManagement.Api/VehicleManagement.Api.csproj", "--no-build", "--urls", "http://0.0.0.0:5014" -RedirectStandardOutput api_stdout.log -RedirectStandardError api_stderr.log
+          Write-Host "Building API Docker image..."
+          docker build -t vehicle-api -f VehicleManagement.Api/Dockerfile .
+          
+          Write-Host "Starting API container..."
+          docker run -d --name backend-api -p 5014:8080 `
+            -e MONGODB_CONNECTION_STRING="mongodb://host.docker.internal:27018" `
+            -e MONGODB_DATABASE_NAME="VehicleDb" `
+            -e JWT_ISSUER="VehicleManagement" `
+            -e JWT_AUDIENCE="VehicleManagementUsers" `
+            -e JWT_SIGNING_KEY="SuperSecretKeyForVehicleManagementAPI!" `
+            vehicle-api
+            
+          Write-Host "Waiting for container to initialize..."
           Start-Sleep -Seconds 5
-          if ($apiProcess.HasExited) {
-              Write-Error "API process exited immediately!"
-              if (Test-Path api_stdout.log) { Get-Content api_stdout.log }
-              if (Test-Path api_stderr.log) { Get-Content api_stderr.log }
-              exit 1
-          }
+          docker logs backend-api
           
       - name: Wait for API
         run: |
@@ -160,8 +156,7 @@ jobs:
           }
           if ($retryCount -eq $maxRetries) { 
               Write-Error "Timeout waiting for API"
-              if (Test-Path api_stdout.log) { Get-Content api_stdout.log }
-              if (Test-Path api_stderr.log) { Get-Content api_stderr.log }
+              docker logs backend-api
               exit 1 
           }
 
@@ -170,9 +165,11 @@ jobs:
           (Get-Content run-performance-tests.ps1) -replace 'Start-Process \(Join-Path \$reportDir "index.html"\)', '' | Set-Content run-performance-tests.ps1
           .\run-performance-tests.ps1
 
-      - name: Clean up MongoDB
+      - name: Clean up Containers
         if: always()
-        run: docker rm -f mongodb-test
+        run: |
+          docker rm -f mongodb-test
+          docker rm -f backend-api
 
       - name: Upload JMeter Report
         uses: actions/upload-artifact@v4
