@@ -123,3 +123,53 @@ jobs:
           path: coverage.xml
           retention-days: 10
 
+  performance-tests:
+    name: JMeter Performance Tests
+    runs-on: self-hosted
+    needs: build-and-unit-tests
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Start API
+        run: |
+          Start-Process -NoNewWindow dotnet -ArgumentList "run", "--project", "VehicleManagement.Api/VehicleManagement.Api.csproj", "--urls", "http://0.0.0.0:5014"
+          
+      - name: Wait for API
+        run: |
+          $maxRetries = 30
+          $retryCount = 0
+          while ($retryCount -lt $maxRetries) {
+              try {
+                  $response = Invoke-WebRequest -Uri "http://localhost:5014/api/Auth/login" -Method POST -Body "{}" -ContentType "application/json" -UseBasicParsing
+                  break
+              } catch {
+                  if ($_.Exception.Response.StatusCode -eq 400 -or $_.Exception.Response.StatusCode -eq 401) {
+                      Write-Host "API is up!"
+                      break
+                  }
+                  Write-Host "Waiting for API..."
+                  Start-Sleep -Seconds 2
+                  $retryCount++
+              }
+          }
+          if ($retryCount -eq $maxRetries) { Write-Error "Timeout waiting for API"; exit 1 }
+
+      - name: Run JMeter Tests
+        run: |
+          (Get-Content run-performance-tests.ps1) -replace 'Start-Process \(Join-Path \$reportDir "index.html"\)', '' | Set-Content run-performance-tests.ps1
+          .\run-performance-tests.ps1
+
+      - name: Upload JMeter Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-jmeter-report
+          path: jmeter/report/
+          retention-days: 10
+
